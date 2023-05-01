@@ -6,9 +6,9 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/kanatovnurzhas/test-task-2/app1/internal/handler"
-	"github.com/kanatovnurzhas/test-task-2/app1/internal/repository"
-	"github.com/kanatovnurzhas/test-task-2/app1/internal/service"
+	"github.com/kanatovnurzhas/test-task-2/app2/internal/handler"
+	"github.com/kanatovnurzhas/test-task-2/app2/internal/repository"
+	"github.com/kanatovnurzhas/test-task-2/app2/internal/service"
 	"github.com/kanatovnurzhas/test-task-2/pkg"
 	"github.com/sirupsen/logrus"
 )
@@ -28,9 +28,9 @@ func main() {
 		return
 	}
 	fmt.Println("Create table success!")
-	sr := repository.StudentRepoInit(db)
-	ss := service.StudentServiceInit(sr)
-	sh := handler.StudentHandlerInit(ss)
+	cr := repository.CourseRepoInit(db)
+	cs := service.CourseServiceInit(cr)
+	ch := handler.CourseHandlerInit(cs)
 
 	server := fiber.New()
 
@@ -42,24 +42,22 @@ func main() {
 	})
 
 	basePath := server.Group("/api")
-	sh.RegisterStudentRoutes(basePath)
+	ch.RegisterCourseRoutes(basePath)
 
 	data, _ := json.MarshalIndent(server.Stack(), "", " ")
 	fmt.Println(string(data))
 
-	if err := server.Listen(":7777"); err != nil {
+	if err := server.Listen(":7778"); err != nil {
 		logger.Fatalf("Error starting server: %s", err)
 	}
 }
 
 const studentTable = `
-				CREATE TABLE IF NOT EXISTS student (
+				CREATE TABLE IF NOT EXISTS course (
 					id SERIAL PRIMARY KEY,
-					name TEXT NOT NULL,
-					age INTEGER NOT NULL,
-					email TEXT NOT NULL UNIQUE,
-					grade TEXT NOT NULL,
-					courses TEXT[]
+					name TEXT NOT NULL UNIQUE,
+					teacher TEXT NOT NULL,
+					students TEXT[]
 					);
 				`
 
