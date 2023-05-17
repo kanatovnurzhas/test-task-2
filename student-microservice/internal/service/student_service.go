@@ -1,8 +1,8 @@
 package service
 
 import (
-	"github.com/kanatovnurzhas/test-task-2/app1/internal/models"
-	"github.com/kanatovnurzhas/test-task-2/app1/internal/repository"
+	"github.com/kanatovnurzhas/test-task-nis/student-microservice/internal/models"
+	"github.com/kanatovnurzhas/test-task-nis/student-microservice/internal/repository"
 )
 
 type IStudentService interface {

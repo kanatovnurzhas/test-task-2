@@ -6,10 +6,10 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/kanatovnurzhas/test-task-2/app1/internal/handler"
-	"github.com/kanatovnurzhas/test-task-2/app1/internal/repository"
-	"github.com/kanatovnurzhas/test-task-2/app1/internal/service"
 	"github.com/kanatovnurzhas/test-task-2/pkg"
+	"github.com/kanatovnurzhas/test-task-nis/student-microservice/internal/handler"
+	"github.com/kanatovnurzhas/test-task-nis/student-microservice/internal/repository"
+	"github.com/kanatovnurzhas/test-task-nis/student-microservice/internal/service"
 	"github.com/sirupsen/logrus"
 )
 

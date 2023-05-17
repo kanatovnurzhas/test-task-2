@@ -3,8 +3,8 @@ package service
 import (
 	"fmt"
 
-	"github.com/kanatovnurzhas/test-task-2/app2/internal/models"
-	"github.com/kanatovnurzhas/test-task-2/app2/internal/repository"
+	"github.com/kanatovnurzhas/test-task-2/course-microservice/internal/models"
+	"github.com/kanatovnurzhas/test-task-2/course-microservice/internal/repository"
 )
 
 type ICourseService interface {

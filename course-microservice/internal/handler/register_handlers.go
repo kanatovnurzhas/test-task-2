@@ -2,7 +2,7 @@ package handler
 
 import (
 	"github.com/gofiber/fiber/v2"
-	"github.com/kanatovnurzhas/test-task-2/app2/internal/service"
+	"github.com/kanatovnurzhas/test-task-2/course-microservice/internal/service"
 )
 
 type CourseHandler struct {

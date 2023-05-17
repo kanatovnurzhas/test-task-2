@@ -4,13 +4,13 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/kanatovnurzhas/test-task-2/app1/internal/models"
+	"github.com/kanatovnurzhas/test-task-nis/student-microservice/internal/models"
 )
 
-func (st *StudentHandler) UpdateStudent(ctx *fiber.Ctx) error {
+func (st *StudentHandler) CreateStudent(ctx *fiber.Ctx) error {
 	student := new(models.Student)
 
-	if err := ctx.BodyParser(student); err != nil {
+	if err := ctx.BodyParser(&student); err != nil {
 		wrappedErr := fmt.Errorf("error is: %w", err)
 		fmt.Println(wrappedErr)
 		return ctx.Status(fiber.StatusInternalServerError).JSON(fiber.Map{
@@ -18,7 +18,7 @@ func (st *StudentHandler) UpdateStudent(ctx *fiber.Ctx) error {
 			"status":  fiber.StatusInternalServerError,
 		})
 	}
-	err := st.service.UpdateStudent(*student)
+	err := st.service.CreateStudent(*student)
 	if err != nil {
 		wrappedErr := fmt.Errorf("error is: %w", err)
 		fmt.Println(wrappedErr)
