@@ -14,85 +14,86 @@ type Messaging interface {
 }
 
 type kafkaClient struct {
-	host     string
-	topic    string
-	ctx      context.Context
-	mu       *sync.Mutex
-	consumer *kafka.Reader
-	producer *kafka.Writer
+	host      string
+	ctx       context.Context
+	mu        *sync.Mutex
+	consumers map[string]*kafka.Reader
+	producers map[string]*kafka.Writer
+	chName    chan []byte
+	chAnswer  chan []byte
 }
 
-func NewKafkaClient(host, topic string, ctx context.Context) Messaging {
-	reader := kafka.NewReader(kafka.ReaderConfig{
-		Brokers: []string{host},
-		Topic:   topic,
-	})
+func NewKafkaClient(host string, topics []string, ctx context.Context, chName, chAnswer chan []byte) Messaging {
+	consumers := make(map[string]*kafka.Reader)
 
-	writer := kafka.NewWriter(kafka.WriterConfig{
-		Brokers: []string{host},
-		Topic:   topic,
-	})
+	for _, topic := range topics {
+		reader := kafka.NewReader(kafka.ReaderConfig{
+			Brokers: []string{host},
+			Topic:   topic,
+		})
+		consumers[topic] = reader
+	}
+
+	producers := make(map[string]*kafka.Writer)
+	for _, topic := range topics {
+		writer := kafka.NewWriter(kafka.WriterConfig{
+			Brokers: []string{host},
+			Topic:   topic,
+		})
+		producers[topic] = writer
+	}
 
 	return &kafkaClient{
-		host:     host,
-		topic:    topic,
-		ctx:      ctx,
-		mu:       &sync.Mutex{},
-		consumer: reader,
-		producer: writer,
+		host:      host,
+		ctx:       ctx,
+		mu:        &sync.Mutex{},
+		consumers: consumers,
+		producers: producers,
+		chName:    chName,
+		chAnswer:  chAnswer,
 	}
 }
 
 func (k *kafkaClient) Read(topic string) error {
-	if topic != k.topic {
-		return fmt.Errorf("specified topic '%s' does not match the client's topic '%s'", topic, k.topic)
+	reader, ok := k.consumers[topic]
+	if !ok {
+		return fmt.Errorf("Unknown topic: %s", topic)
 	}
 
 	for {
-		select {
-		case <-k.ctx.Done():
-			// Контекст отменен, выходим из цикла чтения
-			return nil
-		default:
-			k.mu.Lock()
-
-			m, err := k.consumer.ReadMessage(k.ctx)
-			if err != nil {
-				k.mu.Unlock()
-				return err
-			}
-
-			// Обработка полученного сообщения
-			fmt.Printf("Received message: %s\n", string(m.Value))
-
-			// Дополнительная логика обработки сообщения...
-
-			// Пример: Если получено определенное сообщение, выходим из цикла чтения
-			if string(m.Value) == "exit" {
-				k.mu.Unlock()
-				return nil
-			}
-
-			k.mu.Unlock()
+		m, err := reader.ReadMessage(k.ctx)
+		if err != nil {
+			return err
 		}
+
+		// Обработка полученного сообщения
+		fmt.Printf("Received message: %s\n", string(m.Value))
+		// Дополнительная логика обработки сообщения...
+		if topic == "stud-to-course" || topic == "course-to-stud" {
+			fmt.Println("Read function: ", m.Value)
+			k.chName <- m.Value
+		} else if topic == "answer-for-stud" || topic == "answer-for-course" {
+			fmt.Println("Stud topic")
+			k.chAnswer <- m.Value
+		}
+
 	}
 }
 
 func (k *kafkaClient) Write(topic string, key, value []byte) error {
-	// Проверяем, совпадает ли указанный топик с текущим топиком клиента
-	if topic != k.topic {
-		return fmt.Errorf("specified topic '%s' does not match the client's topic '%s'", topic, k.topic)
-	}
-
 	k.mu.Lock()
 	defer k.mu.Unlock()
+	writer, ok := k.producers[topic]
+	if !ok {
+		return fmt.Errorf("Unknown topic: %s", topic)
+	}
 
 	message := kafka.Message{
 		Key:   key,
 		Value: value,
 	}
 
-	err := k.producer.WriteMessages(k.ctx, message)
+	err := writer.WriteMessages(k.ctx, message)
 	if err != nil {
 		return err
 	}

@@ -1,11 +1,13 @@
 package service
 
 import (
+	"encoding/json"
 	"fmt"
-	"global/pkg/kafka"
+	"log"
 
 	"github.com/kanatovnurzhas/test-task-2/course-microservice/internal/models"
 	"github.com/kanatovnurzhas/test-task-2/course-microservice/internal/repository"
+	"github.com/kanatovnurzhas/test-task-2/pkg/kafka"
 )
 
 const path = "service"
@@ -18,30 +20,57 @@ type ICourseService interface {
 	DeleteCourse(id int) error
 	GetByStudent(name string) ([]models.Course, error)
 	ProduceKafka(name string) error
+	AnswerKafka() error
 }
 
 type courseService struct {
 	CourseRepo  repository.ICourseRepo
 	kafkaClient kafka.Messaging
+	chName      chan []byte
+	chAnswer    chan []byte
 }
 
-func CourseServiceInit(repo repository.ICourseRepo, kafka kafka.Messaging) ICourseService {
+func CourseServiceInit(repo repository.ICourseRepo, kafka kafka.Messaging, chName, chAnswer chan []byte) ICourseService {
 	return &courseService{
 		CourseRepo:  repo,
 		kafkaClient: kafka,
+		chName:      chName,
+		chAnswer:    chAnswer,
 	}
 }
 
 func (cr *courseService) ProduceKafka(name string) error {
-	topic := "course_to_student"
+	topic := "course-to-stud"
 	key := []byte("course-name")
 	msg := []byte(name)
 	err := cr.kafkaClient.Write(topic, key, msg)
 	if err != nil {
-		return fmt.Errorf(path+"produce cafka: %w", err)
+		return fmt.Errorf(path+"produce kafka: %w", err)
 	}
 	fmt.Println("Message sent successfully")
 	return nil
+}
+
+func (cr *courseService) AnswerKafka() error {
+	for {
+		name := <-cr.chName
+		fmt.Println("Answer kafka get!: ", name)
+		courses, err := cr.CourseRepo.GetByStudent(string(name))
+		if err != nil {
+			return err
+		}
+		log.Printf("Курсы на которые записан студент: %+v", courses)
+
+		topic := "answer-for-stud"
+		key := []byte("answer")
+		message, err := json.Marshal(courses)
+		err = cr.kafkaClient.Write(topic, key, message)
+		fmt.Println("Zapis proshla")
+		if err != nil {
+			return fmt.Errorf(path+"produce kafka: %w", err)
+		}
+		fmt.Println("Message sent successfully")
+	}
 }
 
 func (cr *courseService) CreateCourse(course models.Course) error {

@@ -5,15 +5,17 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-	"global/pkg/database"
-	"global/pkg/kafka"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/kanatovnurzhas/test-task-2/course-microservice/internal/handler"
 	"github.com/kanatovnurzhas/test-task-2/course-microservice/internal/repository"
 	"github.com/kanatovnurzhas/test-task-2/course-microservice/internal/service"
+	"github.com/kanatovnurzhas/test-task-2/pkg/database"
+	"github.com/kanatovnurzhas/test-task-2/pkg/kafka"
 	"github.com/sirupsen/logrus"
 )
+
+var topics = []string{"course-to-stud", "answer-for-stud", "stud-to-course", "answer-for-course"}
 
 func main() {
 	db, err := database.ConnectionDB()
@@ -30,11 +32,14 @@ func main() {
 		return
 	}
 	fmt.Println("Create table success!")
-
-	kafkaClient := kafka.NewKafkaClient("localhost:9092", "my-topic", context.Background())
-	go kafkaClient.Read("my-topic")
+	channelName := make(chan []byte)
+	channelAnswer := make(chan []byte)
+	kafkaClient := kafka.NewKafkaClient("localhost:9092", topics, context.Background(), channelName, channelAnswer)
+	go kafkaClient.Read("stud-to-course")
+	go kafkaClient.Read("answer-for-course")
 	cr := repository.CourseRepoInit(db)
-	cs := service.CourseServiceInit(cr, kafkaClient)
+	cs := service.CourseServiceInit(cr, kafkaClient, channelName, channelAnswer)
+	go cs.AnswerKafka()
 	ch := handler.CourseHandlerInit(cs)
 
 	server := fiber.New()

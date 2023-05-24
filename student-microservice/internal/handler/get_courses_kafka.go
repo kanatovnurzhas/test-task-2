@@ -18,10 +18,21 @@ func (st *StudentHandler) GetCoursesKafka(ctx *fiber.Ctx) error {
 			"status":  fiber.StatusInternalServerError,
 		})
 	}
-
 	// return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
 	// 	"success": true,
-	// 	"courses": resp,
+	// 	"courses": "fuck you",
 	// })
-	return nil
+
+	courses, err := st.service.AnswerForStud()
+	fmt.Println(courses)
+	if err != nil || len(courses.Course) == 0 {
+		return ctx.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"success": false,
+			"courses": "fuck you",
+		})
+	}
+	return ctx.Status(fiber.StatusOK).JSON(fiber.Map{
+		"success": true,
+		"courses": courses,
+	})
 }

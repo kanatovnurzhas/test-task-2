@@ -1,4 +1,4 @@
-module global
+module github.com/kanatovnurzhas/test-task-2
 
 go 1.20
 
