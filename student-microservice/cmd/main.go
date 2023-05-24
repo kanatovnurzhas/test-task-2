@@ -1,20 +1,22 @@
 package main
 
 import (
+	"context"
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"global/pkg/database"
+	"global/pkg/kafka"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/kanatovnurzhas/test-task-2/pkg"
-	"github.com/kanatovnurzhas/test-task-nis/student-microservice/internal/handler"
-	"github.com/kanatovnurzhas/test-task-nis/student-microservice/internal/repository"
-	"github.com/kanatovnurzhas/test-task-nis/student-microservice/internal/service"
+	"github.com/kanatovnurzhas/test-task-2/student-microservice/internal/handler"
+	"github.com/kanatovnurzhas/test-task-2/student-microservice/internal/repository"
+	"github.com/kanatovnurzhas/test-task-2/student-microservice/internal/service"
 	"github.com/sirupsen/logrus"
 )
 
 func main() {
-	db, err := pkg.ConnectionDB()
+	db, err := database.ConnectionDB()
 	if err != nil {
 		wrappedErr := fmt.Errorf("connection db refused: %w", err)
 		fmt.Println(wrappedErr)
@@ -28,8 +30,10 @@ func main() {
 		return
 	}
 	fmt.Println("Create table success!")
+
+	kafkaClient := kafka.NewKafkaClient("localhost:9092", "my-topic", context.Background())
 	sr := repository.StudentRepoInit(db)
-	ss := service.StudentServiceInit(sr)
+	ss := service.StudentServiceInit(sr, kafkaClient)
 	sh := handler.StudentHandlerInit(ss)
 
 	server := fiber.New()

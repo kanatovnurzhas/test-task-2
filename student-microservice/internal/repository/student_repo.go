@@ -6,7 +6,7 @@ import (
 
 	"github.com/lib/pq"
 
-	"github.com/kanatovnurzhas/test-task-nis/student-microservice/internal/models"
+	"github.com/kanatovnurzhas/test-task-2/student-microservice/internal/models"
 )
 
 type IStudentRepo interface {

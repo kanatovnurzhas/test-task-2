@@ -2,10 +2,13 @@ package service
 
 import (
 	"fmt"
+	"global/pkg/kafka"
 
 	"github.com/kanatovnurzhas/test-task-2/course-microservice/internal/models"
 	"github.com/kanatovnurzhas/test-task-2/course-microservice/internal/repository"
 )
+
+const path = "service"
 
 type ICourseService interface {
 	CreateCourse(course models.Course) error
@@ -14,16 +17,31 @@ type ICourseService interface {
 	UpdateCourse(course models.Course) error
 	DeleteCourse(id int) error
 	GetByStudent(name string) ([]models.Course, error)
+	ProduceKafka(name string) error
 }
 
 type courseService struct {
-	CourseRepo repository.ICourseRepo
+	CourseRepo  repository.ICourseRepo
+	kafkaClient kafka.Messaging
 }
 
-func CourseServiceInit(repo repository.ICourseRepo) ICourseService {
+func CourseServiceInit(repo repository.ICourseRepo, kafka kafka.Messaging) ICourseService {
 	return &courseService{
-		CourseRepo: repo,
+		CourseRepo:  repo,
+		kafkaClient: kafka,
 	}
+}
+
+func (cr *courseService) ProduceKafka(name string) error {
+	topic := "course_to_student"
+	key := []byte("course-name")
+	msg := []byte(name)
+	err := cr.kafkaClient.Write(topic, key, msg)
+	if err != nil {
+		return fmt.Errorf(path+"produce cafka: %w", err)
+	}
+	fmt.Println("Message sent successfully")
+	return nil
 }
 
 func (cr *courseService) CreateCourse(course models.Course) error {

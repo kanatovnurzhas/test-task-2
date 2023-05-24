@@ -7,7 +7,7 @@ import (
 	"net/http"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/kanatovnurzhas/test-task-nis/student-microservice/internal/models"
+	"github.com/kanatovnurzhas/test-task-2/student-microservice/internal/models"
 )
 
 func (st *StudentHandler) GetCourses(ctx *fiber.Ctx) error {

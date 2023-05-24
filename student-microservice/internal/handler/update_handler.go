@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/gofiber/fiber/v2"
-	"github.com/kanatovnurzhas/test-task-nis/student-microservice/internal/models"
+	"github.com/kanatovnurzhas/test-task-2/student-microservice/internal/models"
 )
 
 func (st *StudentHandler) UpdateStudent(ctx *fiber.Ctx) error {
